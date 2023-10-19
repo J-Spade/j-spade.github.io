@@ -1,0 +1,39 @@
+<html>
+    <head>
+        <title>test</title>
+    </head>
+    <body>
+        <iframe class="myframe" src="./innerframe.html" onload="startup()"></iframe>
+    </body>
+    <script>
+        // global state
+        var listenerAdded = false;
+        var frames = {};
+        
+        // initialization of each frame and the global listener
+        function startup() {
+            // add the postmessage listener
+            if (!listenerAdded) {
+                window.addEventListener(
+                    "message",
+                    (event) => {
+                        // if (event.origin !== "https://forum.starmen.net/") return;
+                        alert(event.data);
+                    },
+                    false,
+                );
+                listenerAdded = true;
+            }
+            // register the new iframe(s)
+            for(const frame of document.getElementsByClassName("myframe")) {
+                if (frame.id == "") {
+                    // TODO: this would use post ID maybe?
+                    let new_id = Math.floor(Math.random() * 65535);
+                    frames[new_id] = frame;
+                    frame.id = new_id.toString();
+                    frame.contentWindow.postMessage("REGISTER " + new_id.toString(), "*");
+                }
+            }
+        }
+    </script>
+</html>
