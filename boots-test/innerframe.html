@@ -4,46 +4,65 @@
     </head>
     <body onload="registerListener()">
         <p>this is a test</p>
-        <button id="id_button" onclick="reportId()">Report ID</button>
+        <button id="hello" onclick="sendHello()">hello</button>
+        <button id="username" onclick="reportUsername()">username</button>
         <p id="frame_id">??</p>
     </body>
     <script>
-        // global state
-        var instance_id = 0;
-        var parent_window = null;
+        //
+        // parent forum page information
+        //
+        var g_forumInfo = {
+            badgecount: 0,
+            bgcolor: "rgb(0,0,0)",
+            postid: "",
+            username: "",
+        }
+        
+        function getBadges() {
+            return g_forumInfo.badgecount;
+        }
 
-        // register the message listener
+        function getBgColor() {
+            return g_forumInfo.bgcolor;
+        }
+
+        function getPostId() {
+            return g_forumInfo.postid;
+        }
+
+        function getUserName() {
+            return g_forumInfo.username;
+        }
+
+        //
+        // messages
+        //
         function registerListener() {
             window.addEventListener(
                 "message",
                 (event) => {
                     // if (event.origin !== "https://forum.starmen.net/") return;
-                    // alert(event.data);
-                    if (parent_window == null) {
-                        parent_window = event.source;
+                    console.log(event.data);
+
+                    // hello
+                    if (event.data.message == "hello") {
+                        g_forumInfo = event.data.content
                     }
-                    document.body.children[0].textContent = event.data;
-                    handleMessage(event.data);
                 },
                 false,
             );
         }
 
-        // message handler
-        function handleMessage(msg) {
-            const cmd_register = "REGISTER "
-            if (msg.startsWith(cmd_register) && instance_id == 0) {
-                instance_id = parseInt(msg.replace(cmd_register, ""));
-                document.getElementById("frame_id").innerText = instance_id.toString();
-                console.log("registered " + instance_id);
-            }
+        //
+        // buttons
+        //
+        function sendHello() {
+            parent.postMessage({message: "hello", content: null}, "*");
         }
 
-        // report the instance ID back to the source window
-        function reportId() {
-            if (parent_window != null) {
-                parent_window.postMessage(instance_id.toString(), "*");
-            }
+        function reportUsername() {
+            alert(g_forumInfo.username);
         }
 
     </script>

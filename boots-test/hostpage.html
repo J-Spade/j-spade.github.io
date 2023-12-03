@@ -3,37 +3,46 @@
         <title>test</title>
     </head>
     <body>
-        <iframe class="myframe" src="./innerframe.html" onload="startup()"></iframe>
+        <iframe class="myframe" src="./innerframe.html" onload="registerListener()"></iframe>
     </body>
     <script>
-        // global state
-        var listenerAdded = false;
-        var frames = {};
-        
-        // initialization of each frame and the global listener
-        function startup() {
-            // add the postmessage listener
-            if (!listenerAdded) {
-                window.addEventListener(
-                    "message",
-                    (event) => {
-                        // if (event.origin !== "https://forum.starmen.net/") return;
-                        alert(event.data);
-                    },
-                    false,
-                );
-                listenerAdded = true;
-            }
-            // register the new iframe(s)
-            for(const frame of document.getElementsByClassName("myframe")) {
-                if (frame.id == "") {
-                    // TODO: this would use post ID maybe?
-                    let new_id = Math.floor(Math.random() * 65535);
-                    frames[new_id] = frame;
-                    frame.id = new_id.toString();
-                    frame.contentWindow.postMessage("REGISTER " + new_id.toString(), "*");
-                }
-            }
+
+        //
+        // messages
+        //
+        const g_messages = {
+            "hello": doHelloMsg
         }
+
+        function doHelloMsg(content) {
+            const pageInfo = {
+                badgecount: 1337,
+                bgcolor: "rgb(1,2,3)",
+                postid: "post12345",
+                username: "avsdoda",
+            };
+            return {message: "hello", content: pageInfo};
+        }
+
+        function registerListener() {
+            window.addEventListener(
+                "message",
+                (event) => {
+                    // if (event.origin !== "https://forum.starmen.net/") return;
+                    console.log(event.data);
+                    
+                    for (const [cmd, func] of Object.entries(g_messages)) {
+                        if (event.data.message == cmd) {
+                            const response = func(event.data.content);
+                            if (response !== null) {
+                                event.source.postMessage(response, "*");
+                            }
+                        }
+                    }
+                },
+                false,
+            );
+        }
+
     </script>
 </html>
