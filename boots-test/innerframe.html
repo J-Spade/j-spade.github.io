@@ -2,16 +2,15 @@
     <head>
         <title>test</title>
     </head>
-    <body onload="registerListener()">
-        <p>this is a test</p>
+    <body onload="registerListener()" style="background-color: #ffffff;">
         <button id="hello" onclick="sendHello()">hello</button>
-        <button id="username" onclick="reportUsername()">username</button>
-        <p id="frame_id">??</p>
+        <button id="info" onclick="putInfoInPost()">info</button>
+        <button id="resize" onclick="toggleFrameSize()">resize</button>
     </body>
     <script>
-        //
-        // parent forum page information
-        //
+
+        // helper functions - should be callable from in-game
+
         var g_forumInfo = {
             badgecount: 0,
             bgcolor: "rgb(0,0,0)",
@@ -19,6 +18,11 @@
             username: "",
         }
         
+        function sendHello() {
+            // TODO: fix the wildcard origin
+            parent.postMessage({message: "hello", content: null}, "*");
+        }
+
         function getBadges() {
             return g_forumInfo.badgecount;
         }
@@ -35,9 +39,16 @@
             return g_forumInfo.username;
         }
 
-        //
-        // messages
-        //
+        function setFrameSize(width, height) {
+            // TODO: fix the wildcard origin
+            parent.postMessage({message: "resize", content: {width: width, height: height}}, "*");
+        }
+
+        function setPostContent(html) {
+            // TODO: fix the wildcard origin
+            parent.postMessage({message: "editpost", content: {html: html}}, "*");
+        }
+
         function registerListener() {
             window.addEventListener(
                 "message",
@@ -54,15 +65,28 @@
             );
         }
 
-        //
-        // buttons
-        //
-        function sendHello() {
-            parent.postMessage({message: "hello", content: null}, "*");
+        // buttons for testing - not needed in-game
+        
+        var g_frameIsExpanded = false;
+
+        function putInfoInPost() {
+            setPostContent(
+                `<p style="color: #98A8BC;">post ID: ${g_forumInfo.postid}</p>
+                <p style="color: #98A8BC;">bg color: ${g_forumInfo.bgcolor}</p>
+                <p style="color: #98A8BC;">username: ${g_forumInfo.username}</p>
+                <p style="color: #98A8BC;">badges: ${g_forumInfo.badgecount}</p>`
+            );
         }
 
-        function reportUsername() {
-            alert(g_forumInfo.username);
+        function toggleFrameSize() {
+            if (g_frameIsExpanded) {
+                setFrameSize(150, 80);
+                g_frameIsExpanded = false;
+            }
+            else {
+                setFrameSize(150, 210);
+                g_frameIsExpanded = true;
+            }
         }
 
     </script>
