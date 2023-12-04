@@ -6,7 +6,7 @@ function getPostElementOfFrame(frame) {
 }
 
 async function fetchForumURL(url) {
-    const response = await window.fetch(indexurl);
+    const response = await window.fetch(url);
     return response.text();
 }
 
