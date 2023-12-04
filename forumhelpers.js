@@ -6,10 +6,6 @@ function getPostElementOfFrame(frame) {
 }
 
 async function fetchForumURL(url) {
-
-    // hack: add "/index.html" for testing - remove this later
-    indexurl = url + "/index.html";
-
     const response = await window.fetch(indexurl);
     return response.text();
 }
