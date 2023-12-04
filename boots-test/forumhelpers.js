@@ -1,8 +1,62 @@
 
-// utility functions
+// utility
 
 function getPostElementOfFrame(frame) {
     return frame.parentElement.parentElement.parentElement.parentElement;  // gross, I know
+}
+
+async function fetchForumURL(url) {
+    const response = await window.fetch(url);
+    return response.text();
+}
+
+async function getPostByCurrentUser() {
+    const profileElem = document.getElementById("profile");
+    if (profileElem === null) return null;
+
+    // construct the "see all messages by user" URL
+    const profileURL = profileElem.getElementsByTagName("a")[0].href;
+    const postsURL = profileURL + "/posts";
+
+    // get the recent posts page
+    const recentsHTML = await fetchForumURL(postsURL);
+    if (recentsHTML == null) return null;
+    const recentsPage = document.createElement("html");
+    recentsPage.innerHTML = recentsHTML;
+    
+    // get the latest post from the table
+    const postList = recentsPage.getElementsByTagName("tr");  // rows in table
+    if (postList.length <= 1) return null;  // first row is headers
+    const threadURL = postList[1].getElementsByTagName("a")[0].href;
+
+    // get the page containing the exemplar post
+    const threadHTML = await fetchForumURL(threadURL);
+    if (threadHTML == null) return null;
+    const otherThread = document.createElement("html");
+    otherThread.innerHTML = threadHTML;
+
+    // find the user's post in the page
+    let userPost = null;
+    for (const post of otherThread.getElementsByClassName("post")) {
+        const profile =  post.getElementsByClassName("member")[0];
+        if (profile.getAttribute("href") == profileURL) {
+            userPost = post;
+            break;
+        }
+    }
+    if (userPost == null) return null;
+    
+    console.log(userPost);
+    return userPost;
+}
+
+async function onLoadHandler() {
+    registerListener();
+
+    // TODO: replace first reply post with fake post by logged-in user
+    const post = await getPostByCurrentUser();
+    if (post == null) return;
+
 }
 
 // command handlers (same prototype for each)
@@ -78,4 +132,4 @@ function registerListener() {
 }
 
 // TODO: would ideally like this to instead live in the `onload` attribute of the iframe tag
-registerListener();
+document.addEventListener("DOMContentLoaded", onLoadHandler);
