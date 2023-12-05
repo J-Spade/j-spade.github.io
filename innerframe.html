@@ -6,20 +6,15 @@
     </head>
     <body onload="registerListener()" style="background-color: #ffffff;">
         <button id="hello" onclick="sendHello()">hello</button>
-        <button id="info" onclick="putInfoInPost()">info</button>
+        <button id="info" onclick="getInfo()">info</button>
         <button id="resize" onclick="toggleFrameSize()">resize</button>
     </body>
     <script>
         // helper functions for testing - not needed for game
         var g_frameIsExpanded = false;
 
-        function putInfoInPost() {
-            setPostContent(
-                `<p style="color: #98A8BC;">post ID: ${g_forumInfo.postid}</p>
-                <p style="color: #98A8BC;">bg color: ${g_forumInfo.bgcolor}</p>
-                <p style="color: #98A8BC;">username: ${g_forumInfo.username}</p>
-                <p style="color: #98A8BC;">badges: ${g_forumInfo.badgecount}</p>`
-            );
+        function getInfo() {
+            alert(JSON.stringify(g_forumInfo));
         }
 
         function toggleFrameSize() {

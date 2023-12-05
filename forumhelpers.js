@@ -24,10 +24,11 @@ async function getPostByCurrentUser() {
     const recentsPage = document.createElement("html");
     recentsPage.innerHTML = recentsHTML;
     
-    // get the latest post from the table
+    // find the latest post in the table
     const postList = recentsPage.getElementsByTagName("tr");  // rows in table
     if (postList.length <= 1) return null;  // first row is headers
     const threadURL = postList[1].getElementsByTagName("a")[0].href;
+    recentsPage.remove();  // no longer needed
 
     // get the page containing the exemplar post
     const threadHTML = await fetchForumURL(threadURL);
@@ -38,24 +39,52 @@ async function getPostByCurrentUser() {
     // find the user's post in the page
     let userPost = null;
     for (const post of otherThread.getElementsByClassName("post")) {
-        const profile =  post.getElementsByClassName("member")[0];
-        if (profile.getAttribute("href") == profileURL) {
+        const postProfile =  post.getElementsByClassName("member")[0];
+        const profileParts = postProfile.getAttribute("href").split("/");
+        const actualParts = profileURL.split("/");
+        if (profileParts[profileParts.length - 1] == actualParts[actualParts.length - 1]) {
             userPost = post;
             break;
         }
     }
     if (userPost == null) return null;
-    
-    console.log(userPost);
-    return userPost;
+
+    // pare things down to just the post element
+    const postElement = document.createElement("div");
+    postElement.innerHTML = userPost.innerHTML;
+    otherThread.remove();
+
+    return postElement;
 }
 
 async function onLoadHandler() {
     registerListener();
 
-    // TODO: replace first reply post with fake post by logged-in user
+    // find an exemplar post by the logged-on user
     const post = await getPostByCurrentUser();
     if (post == null) return;
+
+    // assign "post even" classes to the post
+    // (we're assuming this is being inserted right after the OP)
+    post.classList.add("post");
+    post.classList.add("even");
+
+    // replace the message-content with something fun
+    const content = post.getElementsByClassName("message-content")[0];
+    content.innerHTML = "<p> I can't wait! </p>";
+
+    // insert the faked user post as a reply to the OP
+    const op = document.getElementsByClassName("post")[0];
+    const inserted = op.parentElement.insertBefore(post, op.nextElementSibling);
+
+    // fix even/odd colors
+    let nextPost = inserted.nextElementSibling;
+    while (nextPost != null) {
+        if (!nextPost.classList.replace("even", "odd")) {
+            nextPost.classList.replace("odd", "even");
+        }
+        nextPost = nextPost.nextElementSibling;
+    }
 
 }
 
@@ -80,13 +109,6 @@ function doHello(frame, messageContent) {
         username: username,
     };
     return {message: "hello", content: pageInfo};
-}
-
-function doEditPost(frame, messageContent) {
-    const post = getPostElementOfFrame(frame);
-    const content = post.getElementsByClassName("message-content")[0];
-    content.innerHTML = messageContent.html;
-    return null;  // no response
 }
 
 function doResize(frame, messageContent) {
@@ -115,7 +137,6 @@ function registerListener() {
             // handle commands - each handler uses the same function prototype
             const messageTypes = {
                 "hello": doHello,
-                "editpost": doEditPost,
                 "resize": doResize,
             }
             for (const [cmd, func] of Object.entries(messageTypes)) {

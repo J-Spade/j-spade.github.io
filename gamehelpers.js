@@ -33,11 +33,6 @@ function setFrameSize(width, height) {
     parent.postMessage({message: "resize", content: {width: width, height: height}}, "*");
 }
 
-function setPostContent(html) {
-    // TODO: fix the wildcard origin
-    parent.postMessage({message: "editpost", content: {html: html}}, "*");
-}
-
 function registerListener() {
     window.addEventListener(
         "message",
