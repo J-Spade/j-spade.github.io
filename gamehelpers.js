@@ -29,8 +29,12 @@ function sendHello() {
 }
 
 function deleteBadge() {
-    // TODO: fix the wildcard origin
-    parent.postMessage({message: "delbadge", content: null}, "*");
+    if (g_forumInfo.badgecount > 0)
+    {
+        // TODO: fix the wildcard origin
+        parent.postMessage({message: "delbadge", content: null}, "*");
+        g_forumInfo.badgecount--;
+    }
 }
 
 function setPostTextIndex(idx) {
