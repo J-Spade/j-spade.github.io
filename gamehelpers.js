@@ -7,11 +7,6 @@ var g_forumInfo = {
     username: "",
 }
 
-function sendHello() {
-    // TODO: fix the wildcard origin
-    parent.postMessage({message: "hello", content: null}, "*");
-}
-
 function getBadges() {
     return g_forumInfo.badgecount;
 }
@@ -26,6 +21,21 @@ function getPostId() {
 
 function getUserName() {
     return g_forumInfo.username;
+}
+
+function sendHello() {
+    // TODO: fix the wildcard origin
+    parent.postMessage({message: "hello", content: null}, "*");
+}
+
+function deleteBadge() {
+    // TODO: fix the wildcard origin
+    parent.postMessage({message: "delbadge", content: null}, "*");
+}
+
+function setPostTextIndex(idx) {
+    // TODO: fix the wildcard origin
+    parent.postMessage({message: "settext", content: {index: idx}}, "*");
 }
 
 function setFrameSize(width, height) {

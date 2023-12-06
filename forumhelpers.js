@@ -1,6 +1,14 @@
 
 // utility
 
+// possible text for the spoofed user post
+// (hard-coded options for the game to select from)
+const g_textOptions = [
+    "<p> I can't wait! </p>",
+    "<p> oh no </p>",
+    "<p> :) </p>",
+]
+
 function getPostElementOfFrame(frame) {
     return frame.parentElement.parentElement.parentElement.parentElement;  // gross, I know
 }
@@ -57,9 +65,7 @@ async function getPostByCurrentUser() {
     return postElement;
 }
 
-async function onLoadHandler() {
-    registerListener();
-
+async function insertUserPost() {
     // find an exemplar post by the logged-on user
     const post = await getPostByCurrentUser();
     if (post == null) return;
@@ -69,9 +75,12 @@ async function onLoadHandler() {
     post.classList.add("post");
     post.classList.add("even");
 
-    // replace the message-content with something fun
+    // assign "avsdoda" class to the post so it's faster/easier to find again
+    post.classList.add("avsdoda");
+
+    // replace the message-content with an initial value
     const content = post.getElementsByClassName("message-content")[0];
-    content.innerHTML = "<p> I can't wait! </p>";
+    content.innerHTML = g_textOptions[0];
 
     // insert the faked user post as a reply to the OP
     const op = document.getElementsByClassName("post")[0];
@@ -79,13 +88,37 @@ async function onLoadHandler() {
 
     // fix even/odd colors
     let nextPost = inserted.nextElementSibling;
-    while (nextPost != null) {
+    while (nextPost !== null) {
         if (!nextPost.classList.replace("even", "odd")) {
             nextPost.classList.replace("odd", "even");
         }
         nextPost = nextPost.nextElementSibling;
     }
+}
 
+function getInsertedUserPost() {
+    // "avsdoda" tag was added to the inserted post
+    const avsdodas = document.getElementsByClassName("avsdoda");
+    if (avsdodas.length > 0)
+    {
+        return avsdodas[0];
+    }
+    return null;
+}
+
+function getUserBadges() {
+    const userPost = getInsertedUserPost();
+    if (userPost !== null)
+    {
+        return userPost.getElementsByClassName("badges")[0].children;
+    }
+    return [];
+}
+
+async function onLoadHandler() {
+    registerListener();
+    await insertUserPost();
+    doSetText(0);  // start with initial text option
 }
 
 // command handlers (same prototype for each)
@@ -98,12 +131,10 @@ function doHello(frame, messageContent) {
     const profile = document.getElementById("profile");
     const username = profile !== null ? profile.innerText.trim() : null;
 
-    // TODO: this gets the parent post's badges, not the user's badges
-    const badgeElems = post.getElementsByClassName("badges");
-    const badgecount = badgeElems.length > 0 ? badgeElems[0].children.length : 0;
+    const badgeElems = getUserBadges();
 
     const pageInfo = {
-        badgecount: badgecount,
+        badgecount: badgeElems.length,
         bgcolor: bgcolor,
         postid: postid,
         username: username,
@@ -114,6 +145,29 @@ function doHello(frame, messageContent) {
 function doResize(frame, messageContent) {
     frame.width = messageContent.width;
     frame.height = messageContent.height;
+    return null;  // no response
+}
+
+function doDeleteBadge(frame, messageContent) {
+    const badgeElems = getUserBadges();
+    if (badgeElems.length > 0)
+    {
+        badgeElems[Math.floor(Math.random() * badgeElems.length)].remove();
+    }
+    return null;  // no response
+}
+
+function doSetText(frame, messageContent) {
+    const post = getInsertedUserPost();
+    if (post !== null)
+    {
+        const idx = messageContent.index;
+        if (idx < g_textOptions.length)
+        {
+            const content = post.getElementsByClassName("message-content")[0];
+            content.innerHTML = g_textOptions[idx];
+        }
+    }
     return null;  // no response
 }
 
@@ -138,6 +192,8 @@ function registerListener() {
             const messageTypes = {
                 "hello": doHello,
                 "resize": doResize,
+                "delbadge": doDeleteBadge,
+                "settext": doSetText,
             }
             for (const [cmd, func] of Object.entries(messageTypes)) {
                 if (event.data.message == cmd) {
