@@ -118,7 +118,6 @@ function getUserBadges() {
 async function onLoadHandler() {
     registerListener();
     await insertUserPost();
-    doSetText(0);  // start with initial text option
 }
 
 // command handlers (same prototype for each)
