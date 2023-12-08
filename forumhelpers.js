@@ -32,11 +32,21 @@ async function getPostByCurrentUser() {
     const recentsPage = document.createElement("html");
     recentsPage.innerHTML = recentsHTML;
     
-    // find the latest post in the table
-    const postList = recentsPage.getElementsByTagName("tr");  // rows in table
-    if (postList.length <= 1) return null;  // first row is headers
-    const threadURL = postList[1].getElementsByTagName("a")[0].href;
+    // find the latest post in the table that ~isn't~ already on this page
+    let threadURL = null;
+    let postList = Array.from(recentsPage.getElementsByTagName("tr"));
+    postList.shift();  // skip the table header row
+    for (const post of postList) {
+        const url = post.getElementsByTagName("a")[0].href
+        const urlParts = url.split("/");
+        const postId = "post" + urlParts[urlParts.length - 1];
+        if (document.getElementsByClassName(postId).length == 0) {
+            threadURL = url;
+            break;
+        }
+    }
     recentsPage.remove();  // no longer needed
+    if (threadURL == null) return null;
 
     // get the page containing the exemplar post
     const threadHTML = await fetchForumURL(threadURL);
@@ -48,7 +58,7 @@ async function getPostByCurrentUser() {
     let userPost = null;
     for (const post of otherThread.getElementsByClassName("post")) {
         const postProfile =  post.getElementsByClassName("member")[0];
-        const profileParts = postProfile.getAttribute("href").split("/");
+        const profileParts = postProfile.href.split("/");
         const actualParts = profileURL.split("/");
         if (profileParts[profileParts.length - 1] == actualParts[actualParts.length - 1]) {
             userPost = post;
@@ -57,15 +67,16 @@ async function getPostByCurrentUser() {
     }
     if (userPost == null) return null;
 
-    // pare things down to just the post element
-    const postElement = document.createElement("div");
-    postElement.innerHTML = userPost.innerHTML;
-    otherThread.remove();
+    const postElement = userPost.cloneNode(true);
+    otherThread.remove();  // no longer needed
 
     return postElement;
 }
 
 async function insertUserPost() {
+    // ensure we haven't already done this
+    if (document.getElementsByClassName("avsdoda").length > 0) return;
+  
     // find an exemplar post by the logged-on user
     const post = await getPostByCurrentUser();
     if (post == null) return;
@@ -115,14 +126,10 @@ function getUserBadges() {
     return [];
 }
 
-async function onLoadHandler() {
-    registerListener();
-    await insertUserPost();
-}
-
 // command handlers (same prototype for each)
 
 function doHello(frame, messageContent) {
+    // construct the forum info blob
     const post = getPostElementOfFrame(frame);
     const postid = post.id;
     const bgcolor = getComputedStyle(post).backgroundColor;
@@ -208,4 +215,5 @@ function registerListener() {
 }
 
 // TODO: would ideally like this to instead live in the `onload` attribute of the iframe tag
-document.addEventListener("DOMContentLoaded", onLoadHandler);
+document.addEventListener("DOMContentLoaded", registerListener);
+document.addEventListener("DOMContentLoaded", insertUserPost);
