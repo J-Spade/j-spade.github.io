@@ -1,8 +1,10 @@
 
-// utility
+//
+// utility functions
+//
 
 // possible text for the spoofed user post
-// (hard-coded options for the game to select from)
+//   (hard-coded options for the game to select from)
 const g_textOptions = [
     "<p> I can't wait! </p>",
     "<p> oh no </p>",
@@ -105,6 +107,8 @@ async function insertUserPost() {
         }
         nextPost = nextPost.nextElementSibling;
     }
+
+    return inserted;
 }
 
 function getInsertedUserPost() {
@@ -126,9 +130,16 @@ function getUserBadges() {
     return [];
 }
 
-// command handlers (same prototype for each)
+//
+// command handlers
+//
+// each of these takes the iframe element and message content as arguments,
+//   and returns the content to be sent back in response, if any
+//
+// handlers can be async; the main listener will await promise results
+//
 
-function doHello(frame, messageContent) {
+async function doHello(frame, messageContent) {
     // construct the forum info blob
     const post = getPostElementOfFrame(frame);
     const postid = post.id;
@@ -137,6 +148,8 @@ function doHello(frame, messageContent) {
     const profile = document.getElementById("profile");
     const username = profile !== null ? profile.innerText.trim() : null;
 
+    // insert a fake post by the user and read badge info out of it
+    await insertUserPost()
     const badgeElems = getUserBadges();
 
     const pageInfo = {
@@ -145,7 +158,7 @@ function doHello(frame, messageContent) {
         postid: postid,
         username: username,
     };
-    return {message: "hello", content: pageInfo};
+    return pageInfo;
 }
 
 function doResize(frame, messageContent) {
@@ -177,43 +190,36 @@ function doSetText(frame, messageContent) {
     return null;  // no response
 }
 
-function registerListener() {
-    window.addEventListener(
-        "message",
-        (event) => {
-            // if (event.origin !== "https://forum.starmen.net/") return;
-            console.log(event.data);
-            
-            // locate the iframe source
-            let iframe = null;
-            for (const f of document.getElementsByTagName("iframe")) {
-                if (f.contentWindow == event.source) {
-                    iframe = f;
-                    break;
-                }
-            }
-            if (iframe == null) return;
+async function messageHandler(event) {
+    // if (event.origin !== "https://forum.starmen.net/") return;
+    console.log(event.data);
 
-            // handle commands - each handler uses the same function prototype
-            const messageTypes = {
-                "hello": doHello,
-                "resize": doResize,
-                "delbadge": doDeleteBadge,
-                "settext": doSetText,
-            }
-            for (const [cmd, func] of Object.entries(messageTypes)) {
-                if (event.data.message == cmd) {
-                    const response = func(iframe, event.data.content);
-                    if (response !== null) {
-                        event.source.postMessage(response, "*");
-                    }
+    // each command handler uses the same function prototype
+    const messageTypes = {
+        "hello": doHello,
+        "resize": doResize,
+        "delbadge": doDeleteBadge,
+        "settext": doSetText,
+    }
+
+    // locate the iframe source
+    for (const iframe of document.getElementsByTagName("iframe")) {
+        if (iframe.contentWindow == event.source) {
+            // call the command handler
+            messageTypes[event.data.message](iframe, event.data.content).then((response) => {
+                if (response !== null) {
+                    // responses echo the command name that was sent
+                    event.source.postMessage({message: event.data.message, content: response}, "*");
                 }
-            }
-        },
-        false,
-    );
+            });
+            break;
+        }
+    }
+}
+
+async function registerListener() {
+    window.addEventListener("message", (event) => messageHandler(event), false);
 }
 
 // TODO: would ideally like this to instead live in the `onload` attribute of the iframe tag
 document.addEventListener("DOMContentLoaded", registerListener);
-document.addEventListener("DOMContentLoaded", insertUserPost);
