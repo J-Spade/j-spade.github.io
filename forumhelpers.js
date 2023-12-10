@@ -51,6 +51,12 @@ async function getPostByCurrentUser() {
     }
     if (userPost == null) return null;
 
+    // strip the links out of the edit/quote/report/etc buttons
+    const utils = userPost.getElementsByClassName("utils")[0];
+    for (const elem of utils.getElementsByTagName("a")) {
+        elem.href = "#";
+    }
+
     // return the post element
     return userPost.cloneNode(true);
 }
