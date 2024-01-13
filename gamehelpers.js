@@ -10,7 +10,7 @@ var g_forumInfo = {
 }
 
 function getBadges() {
-    return g_forumInfo.badgecount;
+    return g_forumInfo.badges;
 }
 
 function getBgColor() {
