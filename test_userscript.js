@@ -68,10 +68,12 @@ async function findPostsByCurrentUser() {
         for (const post of document.getElementsByClassName("post")) {
             const otherProfile = post.getElementsByClassName("member")[0].href;
             if (otherProfile == currentProfile) {
-                g_userPosts.append(post);
+                g_userPosts.push(post);
             }
         }
-        if (g_userPosts.length == 0) {
+        // if the user has no posts on this page, we have to find an exemplar
+        //   quick-reply is technically a post element, so ignore it here
+        if (g_userPosts.length == 0 || g_userPosts[0].classList.contains("quick")) {
             const newPost = await fetchLastPostByUser(currentProfile);
             if (newPost !== null) {
                 g_userPosts.splice(0, 0, newPost);
