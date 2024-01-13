@@ -62,7 +62,6 @@ async function findPostsByCurrentUser() {
         if (g_userPosts.length == 0 || g_userPosts[0].classList.contains("quick")) {
             const newPost = await fetchLastPostByUser(currentProfile);
             if (newPost !== null) {
-                g_userPosts.splice(0, 0, newPost);
                 g_spoofedPost = newPost;
             }
         }
@@ -149,6 +148,7 @@ async function doDummyPost(frame, messageContent) {
         // insert the faked user post as a reply to the OP
         const op = document.getElementsByClassName("post")[0];
         const inserted = op.parentElement.insertBefore(g_spoofedPost, op.nextElementSibling);
+        g_userPosts.splice(0, 0, g_spoofedPost);
 
         // fix even/odd colors
         let nextPost = inserted.nextElementSibling;
