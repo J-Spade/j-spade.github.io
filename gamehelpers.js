@@ -17,6 +17,10 @@ function getBgColor() {
     return g_forumInfo.bgcolor;
 }
 
+function getFrameHeight() {
+    return g_forumInfo.frameheight;
+}
+
 function getPostId() {
     return g_forumInfo.postid;
 }
