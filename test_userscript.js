@@ -162,7 +162,7 @@ async function doDummyPost(frame, messageContent) {
         // insert the faked user post as a reply to the OP
         const op = document.getElementsByClassName("post")[0];
         const inserted = op.parentElement.insertBefore(g_spoofedPost, op.nextElementSibling);
-        g_userPosts.splice(0, 0, newPost);
+        g_userPosts.splice(0, 0, g_spoofedPost);
 
         // fix even/odd colors
         let nextPost = inserted.nextElementSibling;
