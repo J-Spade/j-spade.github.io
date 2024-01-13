@@ -25,6 +25,10 @@ function getUserName() {
     return g_forumInfo.username;
 }
 
+function getWeezer() {
+    return g_forumInfo.weezer;
+}
+
 function sendHello() {
     // TODO: fix the wildcard origin
     parent.postMessage({message: "hello", content: null}, "*");
