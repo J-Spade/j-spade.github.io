@@ -9,6 +9,7 @@
         <button id="info" onclick="getInfo()">info</button>
         <button id="post" onclick="insertPost()">post</button>
         <button id="resize" onclick="toggleFrameSize()">resize</button>
+        <button id="shake" onclick="shakeFrame()">shake</button>
         <button id="badge" onclick="deleteRandomBadge()">badge</button>
         <button id="text" onclick="cycleText()">text</button>
     </body>
@@ -31,6 +32,12 @@
                 setFrameSize(150, 210);
                 g_frameIsExpanded = true;
             }
+        }
+
+        async function shakeFrame() {
+            shakeFrameStart();
+            await new Promise(r => setTimeout(r, 3000));
+            shakeFrameStop();
         }
 
         function deleteRandomBadge() {

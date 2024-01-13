@@ -62,6 +62,16 @@ function setFrameSize(width, height) {
     parent.postMessage({message: "resize", content: {width: width, height: height}}, "*");
 }
 
+function shakeFrameStart() {
+    // TODO: fix the wildcard origin
+    parent.postMessage({message: "shakestart", content: null}, "*");
+}
+
+function shakeFrameStop() {
+    // TODO: fix the wildcard origin
+    parent.postMessage({message: "shakestop", content: null}, "*");
+}
+
 function registerListener() {
     window.addEventListener(
         "message",

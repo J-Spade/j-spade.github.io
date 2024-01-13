@@ -15,6 +15,29 @@ const g_textOptions = [
     "<p> :) </p>",
 ];
 
+// CSS defining a "shake" animation
+//   shamelessly stolen from https://stackoverflow.com/questions/73537320/
+// TODO: tweak parameters
+const g_shakeAnimation = `
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-2px, 0px) rotate(1deg); }
+    30% { transform: translate(2px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-2px, 1px) rotate(0deg); }
+    70% { transform: translate(2px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+.shake {
+    animation: shake 0.5s;
+    animation-iteration-count: infinite;
+}
+`
+
 async function fetchForumURL(url) {
     const response = await fetch(url);
     return response.text();
@@ -91,6 +114,11 @@ function getUserBadges() {
 //
 
 async function doHello(frame, messageContent) {
+    // inject shake animation CSS as a <style> tag
+    const style = document.createElement("style");
+    style.innerHTML = g_shakeAnimation;
+    document.head.appendChild(style);
+
     await findPostsByCurrentUser();
 
     const badges = getUserBadges();
@@ -171,6 +199,14 @@ async function doSetText(frame, messageContent) {
     }
 }
 
+async function doShakeStart(frame, messageContent) {
+    frame.classList.add("shake");
+}
+
+async function doShakeStop(frame, messageContent) {
+    frame.classList.remove("shake");
+}
+
 async function messageHandler(event) {
     // if (event.origin !== "https://forum.starmen.net/") return;
     console.log(event.data);
@@ -182,6 +218,8 @@ async function messageHandler(event) {
         dummypost: doDummyPost,
         resize: doResize,
         settext: doSetText,
+        shakestart: doShakeStart,
+        shakestop: doShakeStop,
     };
 
     // locate the iframe source
