@@ -16,109 +16,74 @@
 // utility functions
 //
 
+// the spoofed user post element
+let g_spoofedPost = null;
+
+// all of the user's posts on the current page
+let g_userPosts = [];
+
 // possible text for the spoofed user post
-//   (hard-coded options for the game to select from)
 const g_textOptions = [
     "<p> I can't wait! </p>",
     "<p> oh no </p>",
     "<p> :) </p>",
 ];
 
-function getPostElementOfFrame(frame) {
-    return frame.parentElement.parentElement.parentElement.parentElement; // gross, I know
-}
-
 async function fetchForumURL(url) {
     const response = await window.fetch(url);
     return response.text();
 }
 
-async function getPostByCurrentUser() {
-    const profileElem = document.getElementById("profile");
-    if (profileElem === null) return null;
+async function fetchLastPostByUser(profileURL) {
+    const recentsHTML = await fetchForumURL(profileURL + "/posts");
+    if (recentsHTML !== null) {
+        const parser = new DOMParser();
+        const threadURL = parser
+            .parseFromString(recentsHTML, "text/html")
+            .getElementsByTagName("tr")[1]
+            .getElementsByTagName("a")[0].href;
+        const threadHTML = await fetchForumURL(threadURL);
 
-    const parser = new DOMParser();
-
-    // retrieve the latest post on the "see all messages by user" page
-    const currentProfile = profileElem.getElementsByTagName("a")[0].href;
-    const recentsHTML = await fetchForumURL(currentProfile + "/posts");
-    if (recentsHTML == null) return null;
-
-    const threadURL = parser
-        .parseFromString(recentsHTML, "text/html")
-        .getElementsByTagName("tr")[1]
-        .getElementsByTagName("a")[0].href;
-    const threadHTML = await fetchForumURL(threadURL);
-    if (threadHTML == null) return null;
-
-    const otherThread = parser.parseFromString(threadHTML, "text/html");
-
-    // find the user's post in the thread page
-    let userPost = null;
-    for (const post of otherThread.getElementsByClassName("post")) {
-        const profile = post.getElementsByClassName("member")[0].href;
-        const name = profile.slice(profile.lastIndexOf("/"));
-        if (currentProfile.endsWith(name)) {
-            userPost = post;
-            break;
+        if (threadHTML !== null) {
+            // find the user's post in the thread page
+            const otherThread = parser.parseFromString(threadHTML, "text/html");
+            for (const post of otherThread.getElementsByClassName("post")) {
+                const profile = post.getElementsByClassName("member")[0].href;
+                const name = profile.slice(profile.lastIndexOf("/"));
+                if (profileURL.endsWith(name)) {
+                    return post.cloneNode(true);
+                }
+            }
         }
-    }
-    if (userPost == null) return null;
-
-    // strip the links out of the edit/quote/report/etc buttons
-    const utils = userPost.getElementsByClassName("utils")[0];
-    for (const elem of utils.getElementsByTagName("a")) {
-        elem.href = "#";
-    }
-
-    // return the post element
-    return userPost.cloneNode(true);
-}
-
-async function insertUserPost() {
-    // ensure we haven't already done this
-    if (document.getElementsByClassName("avsdoda").length > 0) return;
-
-    // find an exemplar post by the logged-on user
-    const post = await getPostByCurrentUser();
-    if (post == null) return;
-
-    // assign "post even" to the post - post is inserted right after the OP
-    //   also assign "avsdoda" so it's faster/easier to find again
-    post.classList.add("post", "even", "avsdoda");
-
-    // replace the message-content with an initial value
-    post.getElementsByClassName("message-content")[0].innerHTML = g_textOptions[0];
-
-    // insert the faked user post as a reply to the OP
-    const op = document.getElementsByClassName("post")[0];
-    const inserted = op.parentElement.insertBefore(post, op.nextElementSibling);
-
-    // fix even/odd colors
-    let nextPost = inserted.nextElementSibling;
-    while (nextPost !== null) {
-        if (!nextPost.classList.replace("even", "odd")) {
-            nextPost.classList.replace("odd", "even");
-        }
-        nextPost = nextPost.nextElementSibling;
-    }
-
-    return inserted;
-}
-
-function getInsertedUserPost() {
-    // "avsdoda" tag was added to the inserted post
-    const avsdodas = document.getElementsByClassName("avsdoda");
-    if (avsdodas.length > 0) {
-        return avsdodas[0];
     }
     return null;
 }
 
+async function findPostsByCurrentUser() {
+    const profileElem = document.getElementById("profile");
+    if (profileElem !== null) {
+        const currentProfile = profileElem.getElementsByTagName("a")[0].href;
+    
+        g_userPosts = [];
+        for (const post of document.getElementsByClassName("post")) {
+            const otherProfile = post.getElementsByClassName("member")[0].href;
+            if (otherProfile == currentProfile) {
+                g_userPosts.append(post);
+            }
+        }
+        if (g_userPosts.length == 0) {
+            const newPost = await fetchLastPostByUser(currentProfile);
+            if (newPost !== null) {
+                g_userPosts.splice(0, 0, newPost);
+            }
+        }
+        g_spoofedPost = g_userPosts[0].cloneNode(true);
+    }
+}
+
 function getUserBadges() {
-    const userPost = getInsertedUserPost();
-    if (userPost !== null) {
-        return userPost.getElementsByClassName("badges")[0].children;
+    if (g_spoofedPost !== null) {
+        return g_spoofedPost.getElementsByClassName("badges")[0].children;
     }
     return [];
 }
@@ -131,10 +96,10 @@ function getUserBadges() {
 //
 
 async function doHello(frame, messageContent) {
-    await insertUserPost();
+    await findPostsByCurrentUser();
 
     const badgeElems = getUserBadges();
-    const post = getPostElementOfFrame(frame);
+    const post = frame.parentElement.parentElement.parentElement.parentElement; // gross, I know
     const profile = document.getElementById("profile");
     const username = profile !== null ? profile.innerText.trim() : null;
 
@@ -143,6 +108,7 @@ async function doHello(frame, messageContent) {
         bgcolor: getComputedStyle(post).backgroundColor,
         postid: post.id,
         username: username,
+        frameheight: frame.height,
     };
     return pageInfo;
 }
@@ -159,12 +125,45 @@ async function doDeleteBadge(frame, messageContent) {
     }
 }
 
+async function doDummyPost(frame, messageContent) {
+    if (g_spoofedPost !== null)
+    {
+        // ensure we haven't already done this
+        if (document.getElementsByClassName("avsdoda").length > 0) return;
+    
+        // assign "post even" to the post - post is inserted right after the OP
+        //   also assign "avsdoda" so it's faster/easier to find again
+        g_spoofedPost.classList.add("post", "even", "avsdoda");
+    
+        // replace the message-content with an initial value
+        g_spoofedPost.getElementsByClassName("message-content")[0].innerHTML = g_textOptions[0];
+    
+        // strip the links out of the edit/quote/report/etc buttons
+        const utils = g_spoofedPost.getElementsByClassName("utils")[0];
+        for (const elem of utils.getElementsByTagName("a")) {
+            elem.href = "#";
+        }
+    
+        // insert the faked user post as a reply to the OP
+        const op = document.getElementsByClassName("post")[0];
+        const inserted = op.parentElement.insertBefore(g_spoofedPost, op.nextElementSibling);
+    
+        // fix even/odd colors
+        let nextPost = inserted.nextElementSibling;
+        while (nextPost !== null) {
+            if (!nextPost.classList.replace("even", "odd")) {
+                nextPost.classList.replace("odd", "even");
+            }
+            nextPost = nextPost.nextElementSibling;
+        }
+    }
+}
+
 async function doSetText(frame, messageContent) {
-    const post = getInsertedUserPost();
-    if (post !== null) {
+    if (g_spoofedPost !== null) {
         const idx = messageContent.index;
         if (idx < g_textOptions.length) {
-            const content = post.getElementsByClassName("message-content")[0];
+            const content = g_spoofedPost.getElementsByClassName("message-content")[0];
             content.innerHTML = g_textOptions[idx];
         }
     }
@@ -177,8 +176,9 @@ async function messageHandler(event) {
     // each command handler uses the same function prototype
     const messageTypes = {
         hello: doHello,
-        resize: doResize,
         delbadge: doDeleteBadge,
+        dummypost: doDummyPost,
+        resize: doResize,
         settext: doSetText,
     };
 

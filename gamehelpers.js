@@ -5,6 +5,7 @@ var g_forumInfo = {
     bgcolor: "rgb(0,0,0)",
     postid: "",
     username: "",
+    frameheight: 80,
 }
 
 function getBadges() {
@@ -26,6 +27,11 @@ function getUserName() {
 function sendHello() {
     // TODO: fix the wildcard origin
     parent.postMessage({message: "hello", content: null}, "*");
+}
+
+function insertPost() {
+    // TODO: fix the wildcard origin
+    parent.postMessage({message: "dummypost", content: null}, "*");
 }
 
 function deleteBadge() {
