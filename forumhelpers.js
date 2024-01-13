@@ -16,21 +16,40 @@ const g_textOptions = [
 ];
 
 // CSS defining a "shake" animation
-//   shamelessly stolen from https://stackoverflow.com/questions/73537320/
+//   idea shamelessly stolen from https://stackoverflow.com/questions/73537320/
 // TODO: tweak parameters
-const g_shakeAnimation = `
+const g_shakeAnimation_1 = `
 @keyframes shake {
     0% { transform: translate(1px, 1px) rotate(0deg); }
     10% { transform: translate(-1px, -2px) rotate(-1deg); }
-    20% { transform: translate(-2px, 0px) rotate(1deg); }
-    30% { transform: translate(2px, 2px) rotate(0deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
     40% { transform: translate(1px, -1px) rotate(1deg); }
     50% { transform: translate(-1px, 2px) rotate(-1deg); }
-    60% { transform: translate(-2px, 1px) rotate(0deg); }
-    70% { transform: translate(2px, 1px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
     80% { transform: translate(-1px, -1px) rotate(1deg); }
     90% { transform: translate(1px, 2px) rotate(0deg); }
     100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+.shake {
+    animation: shake 0.5s;
+    animation-iteration-count: infinite;
+}
+`
+const g_shakeAnimation_2 = `
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -3px) rotate(-0.25deg); }
+    20% { transform: translate(-4px, 0px) rotate(0.25deg); }
+    30% { transform: translate(4px, 3px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(0.25deg); }
+    50% { transform: translate(-1px, 3px) rotate(-0.25deg); }
+    60% { transform: translate(-4px, 1px) rotate(0deg); }
+    70% { transform: translate(4px, 1px) rotate(-0.25deg); }
+    80% { transform: translate(-1px, -1px) rotate(0.25deg); }
+    90% { transform: translate(1px, 3px) rotate(0deg); }
+    100% { transform: translate(1px, -3px) rotate(-0.25deg); }
 }
 .shake {
     animation: shake 0.5s;
@@ -116,7 +135,7 @@ function getUserBadges() {
 async function doHello(frame, messageContent) {
     // inject shake animation CSS as a <style> tag
     const style = document.createElement("style");
-    style.innerHTML = g_shakeAnimation;
+    style.innerHTML = g_shakeAnimation_2;
     document.head.appendChild(style);
 
     await findPostsByCurrentUser();
@@ -200,11 +219,17 @@ async function doSetText(frame, messageContent) {
 }
 
 async function doShakeStart(frame, messageContent) {
-    frame.classList.add("shake");
+    // frame.classList.add("shake");
+    for (const elem of document.getElementsByTagName("*")) {
+        elem.classList.add("shake");
+    }
 }
 
 async function doShakeStop(frame, messageContent) {
-    frame.classList.remove("shake");
+    // frame.classList.remove("shake");
+    for (const elem of document.getElementsByTagName("*")) {
+        elem.classList.remove("shake");
+    }
 }
 
 async function messageHandler(event) {

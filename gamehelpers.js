@@ -1,5 +1,7 @@
 // helper functions - should be usable from in-game
 
+var g_helloReceived = false;
+
 var g_forumInfo = {
     badges: [],
     bgcolor: "rgb(0,0,0)",
@@ -7,6 +9,10 @@ var g_forumInfo = {
     postid: "",
     username: "",
     weezer: false,
+}
+
+function helloReceived() {
+    return g_helloReceived;
 }
 
 function getBadges() {
@@ -62,12 +68,12 @@ function setFrameSize(width, height) {
     parent.postMessage({message: "resize", content: {width: width, height: height}}, "*");
 }
 
-function shakeFrameStart() {
+function shakeStart() {
     // TODO: fix the wildcard origin
     parent.postMessage({message: "shakestart", content: null}, "*");
 }
 
-function shakeFrameStop() {
+function shakeStop() {
     // TODO: fix the wildcard origin
     parent.postMessage({message: "shakestop", content: null}, "*");
 }
@@ -81,7 +87,8 @@ function registerListener() {
 
             // hello
             if (event.data.message == "hello") {
-                g_forumInfo = event.data.content
+                g_forumInfo = event.data.content;
+                g_helloReceived = true;
             }
         },
         false,

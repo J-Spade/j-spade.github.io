@@ -35,9 +35,9 @@
         }
 
         async function shakeFrame() {
-            shakeFrameStart();
+            shakeStart();
             await new Promise(r => setTimeout(r, 3000));
-            shakeFrameStop();
+            shakeStop();
         }
 
         function deleteRandomBadge() {
