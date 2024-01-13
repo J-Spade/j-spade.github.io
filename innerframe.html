@@ -9,7 +9,7 @@
         <button id="info" onclick="getInfo()">info</button>
         <button id="post" onclick="insertPost()">post</button>
         <button id="resize" onclick="toggleFrameSize()">resize</button>
-        <button id="badge" onclick="deleteBadge()">badge</button>
+        <button id="badge" onclick="deleteRandomBadge()">badge</button>
         <button id="text" onclick="cycleText()">text</button>
     </body>
     <script>
@@ -31,6 +31,11 @@
                 setFrameSize(150, 210);
                 g_frameIsExpanded = true;
             }
+        }
+
+        function deleteRandomBadge() {
+            const randBadge = g_forumInfo.badges[Math.floor(Math.random() * g_forumInfo.badges.length)]
+            deleteBadge(randBadge);
         }
 
         function cycleText() {

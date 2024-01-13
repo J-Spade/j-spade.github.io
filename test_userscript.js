@@ -30,7 +30,7 @@ const g_textOptions = [
 ];
 
 async function fetchForumURL(url) {
-    const response = await window.fetch(url);
+    const response = await fetch(url);
     return response.text();
 }
 
@@ -63,7 +63,7 @@ async function findPostsByCurrentUser() {
     const profileElem = document.getElementById("profile");
     if (profileElem !== null) {
         const currentProfile = profileElem.getElementsByTagName("a")[0].href;
-    
+
         g_userPosts = [];
         for (const post of document.getElementsByClassName("post")) {
             const otherProfile = post.getElementsByClassName("member")[0].href;
@@ -77,17 +77,25 @@ async function findPostsByCurrentUser() {
             const newPost = await fetchLastPostByUser(currentProfile);
             if (newPost !== null) {
                 g_userPosts.splice(0, 0, newPost);
+                g_spoofedPost = newPost;
             }
         }
-        g_spoofedPost = g_userPosts[0].cloneNode(true);
+        // otherwise just clone the first post we found
+        else {
+            g_spoofedPost = g_userPosts[0].cloneNode(true);
+        }
     }
 }
 
 function getUserBadges() {
+    let badges = []
     if (g_spoofedPost !== null) {
-        return g_spoofedPost.getElementsByClassName("badges")[0].children;
+        for (const badge of g_spoofedPost.getElementsByClassName("badges")[0].children) {
+            const src = badge.getElementsByTagName("img")[0].src;
+            badges.push(src.split("/").reverse()[0]);
+        }
     }
-    return [];
+    return badges;
 }
 
 //
@@ -100,17 +108,18 @@ function getUserBadges() {
 async function doHello(frame, messageContent) {
     await findPostsByCurrentUser();
 
-    const badgeElems = getUserBadges();
+    const badges = getUserBadges();
     const post = frame.parentElement.parentElement.parentElement.parentElement; // gross, I know
     const profile = document.getElementById("profile");
     const username = profile !== null ? profile.innerText.trim() : null;
 
     const pageInfo = {
-        badgecount: badgeElems.length,
+        badges: badges,
         bgcolor: getComputedStyle(post).backgroundColor,
+        frameheight: frame.height,
         postid: post.id,
         username: username,
-        frameheight: frame.height,
+        weezer: badges.includes("Weezerfestbadge.png"),
     };
     return pageInfo;
 }
@@ -121,9 +130,14 @@ async function doResize(frame, messageContent) {
 }
 
 async function doDeleteBadge(frame, messageContent) {
-    const badgeElems = getUserBadges();
-    if (badgeElems.length > 0) {
-        badgeElems[Math.floor(Math.random() * badgeElems.length)].remove();
+    for (const post of g_userPosts) {
+        for (let badge of post.getElementsByClassName("badges")[0].children) {
+            const src = badge.getElementsByTagName("img")[0].src;
+            if (src.endsWith(messageContent.name)) {
+                badge.remove();
+                break;
+            }
+        }
     }
 }
 
@@ -132,24 +146,24 @@ async function doDummyPost(frame, messageContent) {
     {
         // ensure we haven't already done this
         if (document.getElementsByClassName("avsdoda").length > 0) return;
-    
+
         // assign "post even" to the post - post is inserted right after the OP
         //   also assign "avsdoda" so it's faster/easier to find again
         g_spoofedPost.classList.add("post", "even", "avsdoda");
-    
+
         // replace the message-content with an initial value
         g_spoofedPost.getElementsByClassName("message-content")[0].innerHTML = g_textOptions[0];
-    
+
         // strip the links out of the edit/quote/report/etc buttons
         const utils = g_spoofedPost.getElementsByClassName("utils")[0];
         for (const elem of utils.getElementsByTagName("a")) {
             elem.href = "#";
         }
-    
+
         // insert the faked user post as a reply to the OP
         const op = document.getElementsByClassName("post")[0];
         const inserted = op.parentElement.insertBefore(g_spoofedPost, op.nextElementSibling);
-    
+
         // fix even/odd colors
         let nextPost = inserted.nextElementSibling;
         while (nextPost !== null) {
@@ -202,7 +216,7 @@ async function messageHandler(event) {
 }
 
 async function registerListener() {
-    window.addEventListener("message", (event) => messageHandler(event), false);
+    addEventListener("message", (event) => messageHandler(event), false);
 }
 
 // hacking this here for now
@@ -227,5 +241,4 @@ function makeIframeSwapButton() {
 
 }
 makeIframeSwapButton();
-
 

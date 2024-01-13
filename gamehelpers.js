@@ -1,11 +1,12 @@
 // helper functions - should be usable from in-game
 
 var g_forumInfo = {
-    badgecount: 0,
+    badges: [],
     bgcolor: "rgb(0,0,0)",
+    frameheight: 80,
     postid: "",
     username: "",
-    frameheight: 80,
+    weezer: false,
 }
 
 function getBadges() {
@@ -34,12 +35,12 @@ function insertPost() {
     parent.postMessage({message: "dummypost", content: null}, "*");
 }
 
-function deleteBadge() {
-    if (g_forumInfo.badgecount > 0)
-    {
+function deleteBadge(badgeName) {
+    var idx = g_forumInfo.badges.indexOf(badgeName);
+    if (idx != -1) {
+        g_forumInfo.badges.splice(idx, 1);
         // TODO: fix the wildcard origin
-        parent.postMessage({message: "delbadge", content: null}, "*");
-        g_forumInfo.badgecount--;
+        parent.postMessage({message: "delbadge", content: {name: badgeName}}, "*");
     }
 }
 
