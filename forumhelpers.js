@@ -80,7 +80,7 @@ async function findPostsByCurrentUser() {
             }
         }
         // if the user has no posts on this page, we have to find an exemplar
-        //   quick-reply is technically a post element, so ignore it here
+        //   (quick-reply is technically a post element, but ignore it here)
         if (g_userPosts.length == 0 || g_userPosts[0].classList.contains("quick")) {
             const newPost = await fetchLastPostByUser(currentProfile);
             if (newPost !== null) {
@@ -91,6 +91,9 @@ async function findPostsByCurrentUser() {
         else {
             g_spoofedPost = g_userPosts[0].cloneNode(true);
         }
+        // track the spoofed post along with the real ones
+        //   (invisible until inserted into the page later)
+        g_userPosts.splice(0, 0, g_spoofedPost);
     }
 }
 
@@ -175,7 +178,6 @@ async function doDummyPost(frame, messageContent) {
         // insert the faked user post as a reply to the OP
         const op = document.getElementsByClassName("post")[0];
         const inserted = op.parentElement.insertBefore(g_spoofedPost, op.nextElementSibling);
-        g_userPosts.splice(0, 0, g_spoofedPost);
 
         // fix even/odd colors
         let nextPost = inserted.nextElementSibling;
