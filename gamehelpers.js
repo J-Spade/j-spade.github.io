@@ -68,9 +68,9 @@ function setFrameSize(width, height) {
     parent.postMessage({message: "resize", content: {width: width, height: height}}, "*");
 }
 
-function shakeStart() {
+function shakeStart(intensity) {
     // TODO: fix the wildcard origin
-    parent.postMessage({message: "shakestart", content: null}, "*");
+    parent.postMessage({message: "shakestart", content: {intensity: intensity}}, "*");
 }
 
 function shakeStop() {

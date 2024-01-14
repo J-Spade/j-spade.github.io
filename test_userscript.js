@@ -215,14 +215,16 @@ async function doSetText(frame, messageContent) {
 }
 
 async function doShakeStart(frame, messageContent) {
-    // frame.classList.add("shake");
     for (const elem of document.getElementsByTagName("*")) {
         elem.classList.add("shake");
+    }
+    // TODO: there is probably a better way to do this...
+    for (const anim of document.getAnimations()) {
+        anim.playbackRate = messageContent.intensity;
     }
 }
 
 async function doShakeStop(frame, messageContent) {
-    // frame.classList.remove("shake");
     for (const elem of document.getElementsByTagName("*")) {
         elem.classList.remove("shake");
     }

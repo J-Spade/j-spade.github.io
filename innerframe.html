@@ -35,7 +35,7 @@
         }
 
         async function shakeFrame() {
-            shakeStart();
+            shakeStart(Math.random());
             await new Promise(r => setTimeout(r, 3000));
             shakeStop();
         }
