@@ -60,21 +60,18 @@ async function fetchLastPostByUser(profileURL) {
     const recentsHTML = await fetchForumURL(profileURL + "/posts");
     if (recentsHTML !== null) {
         const parser = new DOMParser();
-        const threadURL = parser
+        const postURL = parser
             .parseFromString(recentsHTML, "text/html")
             .getElementsByTagName("tr")[1]
             .getElementsByTagName("a")[0].href;
-        const threadHTML = await fetchForumURL(threadURL);
+        const threadHTML = await fetchForumURL(postURL);
 
         if (threadHTML !== null) {
-            // find the user's post in the thread page
             const otherThread = parser.parseFromString(threadHTML, "text/html");
-            for (const post of otherThread.getElementsByClassName("post")) {
-                const profile = post.getElementsByClassName("member")[0].href;
-                const name = profile.slice(profile.lastIndexOf("/"));
-                if (profileURL.endsWith(name)) {
-                    return post.cloneNode(true);
-                }
+            const postId = postURL.split("/").reverse()[0];
+            const post = otherThread.getElementById(`post${postId}`);
+            if (post !== null) {
+                return post.cloneNode(true);
             }
         }
     }
@@ -107,7 +104,9 @@ async function findPostsByCurrentUser() {
         }
         // track the spoofed post along with the real ones
         //   (invisible until inserted into the page later)
-        g_userPosts.splice(0, 0, g_spoofedPost);
+        if (g_spoofedPost !== null) {
+            g_userPosts.splice(0, 0, g_spoofedPost);
+        }
     }
 }
 
