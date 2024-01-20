@@ -18,7 +18,7 @@
 
 // expected origin/target domain for game messages
 // TODO: replace with production itch.io domain
-const g_gameOrigin = "https://josh.jspade.net";
+const g_gameOrigin = "https://wanderingboots.github.io";
 
 // the spoofed user post element
 let g_spoofedPost = null;
@@ -286,7 +286,7 @@ function makeIframeSwapButton() {
     button.textContent = "swap!";
     button.addEventListener("click", function() {
         posts[0].getElementsByClassName("member")[0]
-            .innerHTML = '<iframe src="https://josh.jspade.net/innerframe.html" width="150" height="80" />';
+        .innerHTML = '<iframe src="https://wanderingboots.github.io/" width="510" height="510" />';
     });
     posts[0].getElementsByClassName("post-header")[0].prepend(button);
 

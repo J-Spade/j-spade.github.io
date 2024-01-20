@@ -4,7 +4,7 @@
 
 // expected origin/target domain for game messages
 // TODO: replace with production itch.io domain
-const g_gameOrigin = "https://josh.jspade.net";
+const g_gameOrigin = "https://wanderingboots.github.io";
 
 // the spoofed user post element
 let g_spoofedPost = null;
