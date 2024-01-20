@@ -2,6 +2,10 @@
 // utility functions
 //
 
+// expected origin/target domain for game messages
+// TODO: replace with production itch.io domain
+const g_gameOrigin = "https://josh.jspade.net";
+
 // the spoofed user post element
 let g_spoofedPost = null;
 
@@ -200,10 +204,10 @@ async function doSetText(frame, messageContent) {
 }
 
 async function doShakeStart(frame, messageContent) {
+    // there is probably a better way to do this...
     for (const elem of document.getElementsByTagName("*")) {
         elem.classList.add("shake");
     }
-    // TODO: there is probably a better way to do this...
     for (const anim of document.getAnimations()) {
         anim.playbackRate = messageContent.intensity;
     }
@@ -216,8 +220,9 @@ async function doShakeStop(frame, messageContent) {
 }
 
 async function messageHandler(event) {
-    // if (event.origin !== "https://forum.starmen.net/") return;
-    console.log(event.data);
+    // TODO: comment out logging
+    console.log(event);
+    if (event.origin !== g_gameOrigin) return;
 
     // each command handler uses the same function prototype
     const messageTypes = {
@@ -238,8 +243,8 @@ async function messageHandler(event) {
                 .then((response) => {
                     if (typeof response !== "undefined" && response !== null) {
                         // responses echo the command name that was sent
-                        // TODO: fix the wildcard origin
-                        event.source.postMessage({ message: event.data.message, content: response }, "*");
+                        event.source.postMessage({message: event.data.message, content: response },
+                            g_gameOrigin);
                     }
                 });
             break;

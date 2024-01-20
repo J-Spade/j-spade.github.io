@@ -1,5 +1,7 @@
 // helper functions - should be usable from in-game
 
+const g_forumOrigin = "https://forum.starmen.net";
+
 var g_helloReceived = false;
 
 var g_forumInfo = {
@@ -40,50 +42,44 @@ function getWeezer() {
 }
 
 function sendHello() {
-    // TODO: fix the wildcard origin
-    parent.postMessage({message: "hello", content: null}, "*");
+    parent.postMessage({message: "hello", content: null}, g_forumOrigin);
 }
 
 function insertPost() {
-    // TODO: fix the wildcard origin
-    parent.postMessage({message: "dummypost", content: null}, "*");
+    parent.postMessage({message: "dummypost", content: null}, g_forumOrigin);
 }
 
 function deleteBadge(badgeName) {
     var idx = g_forumInfo.badges.indexOf(badgeName);
     if (idx != -1) {
         g_forumInfo.badges.splice(idx, 1);
-        // TODO: fix the wildcard origin
-        parent.postMessage({message: "delbadge", content: {name: badgeName}}, "*");
+        parent.postMessage({message: "delbadge", content: {name: badgeName}}, g_forumOrigin);
     }
 }
 
 function setPostTextIndex(idx) {
-    // TODO: fix the wildcard origin
-    parent.postMessage({message: "settext", content: {index: idx}}, "*");
+    parent.postMessage({message: "settext", content: {index: idx}}, g_forumOrigin);
 }
 
 function setFrameSize(width, height) {
-    // TODO: fix the wildcard origin
-    parent.postMessage({message: "resize", content: {width: width, height: height}}, "*");
+    parent.postMessage({message: "resize", content: {width: width, height: height}}, g_forumOrigin);
 }
 
 function shakeStart(intensity) {
-    // TODO: fix the wildcard origin
-    parent.postMessage({message: "shakestart", content: {intensity: intensity}}, "*");
+    parent.postMessage({message: "shakestart", content: {intensity: intensity}}, g_forumOrigin);
 }
 
 function shakeStop() {
-    // TODO: fix the wildcard origin
-    parent.postMessage({message: "shakestop", content: null}, "*");
+    parent.postMessage({message: "shakestop", content: null}, g_forumOrigin);
 }
 
 function registerListener() {
     window.addEventListener(
         "message",
         (event) => {
-            // if (event.origin !== "https://forum.starmen.net/") return;
-            console.log(event.data);
+            // TODO: comment out logging
+            console.log(event)
+            if (event.origin !== g_forumOrigin) return;
 
             // hello
             if (event.data.message == "hello") {
