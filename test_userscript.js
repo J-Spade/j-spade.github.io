@@ -83,10 +83,6 @@ async function fetchLastPostByUser(profileURL) {
     return null;
 }
 
-async function fetchLastPostByBoots() {
-    return fetchLastPostByUser("https://forum.starmen.net/members/Amstrauz");
-}
-
 //
 // command handlers
 //
