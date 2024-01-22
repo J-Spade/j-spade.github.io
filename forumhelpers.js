@@ -1,5 +1,5 @@
 //
-// utility functions
+// utility
 //
 
 // expected origin/target domain for game messages
@@ -50,65 +50,27 @@ async function fetchLastPostByUser(profileURL) {
     const recentsHTML = await fetchForumURL(profileURL + "/posts");
     if (recentsHTML !== null) {
         const parser = new DOMParser();
-        const postURL = parser
-            .parseFromString(recentsHTML, "text/html")
-            .getElementsByTagName("tr")[1]
-            .getElementsByTagName("a")[0].href;
-        const threadHTML = await fetchForumURL(postURL);
-
-        if (threadHTML !== null) {
-            const otherThread = parser.parseFromString(threadHTML, "text/html");
-            const postId = postURL.split("/").reverse()[0];
-            const post = otherThread.getElementById(`post${postId}`);
-            if (post !== null) {
-                return post.cloneNode(true);
+        // first row of table is column headers
+        const postRows = parser.parseFromString(recentsHTML, "text/html")
+                               .getElementsByTagName("tr");
+        if (postRows.length > 1) {
+            const postURL = postRows[1].getElementsByTagName("a")[0].href;
+            const threadHTML = await fetchForumURL(postURL);
+            if (threadHTML !== null) {
+                const otherThread = parser.parseFromString(threadHTML, "text/html");
+                const postId = postURL.split("/").reverse()[0];
+                const post = otherThread.getElementById(`post${postId}`);
+                if (post !== null) {
+                    return post.cloneNode(true);
+                }
             }
         }
     }
     return null;
 }
 
-async function findPostsByCurrentUser() {
-    const profileElem = document.getElementById("profile");
-    if (profileElem !== null) {
-        const currentProfile = profileElem.getElementsByTagName("a")[0].href;
-
-        g_userPosts = [];
-        for (const post of document.getElementsByClassName("post")) {
-            const otherProfile = post.getElementsByClassName("member")[0].href;
-            if (otherProfile == currentProfile) {
-                g_userPosts.push(post);
-            }
-        }
-        // if the user has no posts on this page, we have to find an exemplar
-        //   (quick-reply is technically a post element, but ignore it here)
-        if (g_userPosts.length == 0 || g_userPosts[0].classList.contains("quick")) {
-            const newPost = await fetchLastPostByUser(currentProfile);
-            if (newPost !== null) {
-                g_spoofedPost = newPost;
-            }
-        }
-        // otherwise just clone the first post we found
-        else {
-            g_spoofedPost = g_userPosts[0].cloneNode(true);
-        }
-        // track the spoofed post along with the real ones
-        //   (invisible until inserted into the page later)
-        if (g_spoofedPost !== null) {
-            g_userPosts.splice(0, 0, g_spoofedPost);
-        }
-    }
-}
-
-function getUserBadges() {
-    let badges = []
-    if (g_spoofedPost !== null) {
-        for (const badge of g_spoofedPost.getElementsByClassName("badges")[0].children) {
-            const src = badge.getElementsByTagName("img")[0].src;
-            badges.push(src.split("/").reverse()[0]);
-        }
-    }
-    return badges;
+async function fetchLastPostByBoots() {
+    return fetchLastPostByUser("https://forum.starmen.net/members/Amstrauz");
 }
 
 //
@@ -119,26 +81,88 @@ function getUserBadges() {
 //
 
 async function doHello(frame, messageContent) {
+    // in case of repeat "hello" messages
+    g_userPosts = [];
+    g_spoofedPost = null;
+
+    const post = frame.parentElement.parentElement.parentElement.parentElement; // gross, I know
+    const profileElem = document.getElementById("profile");
+
     // inject shake animation CSS as a <style> tag
     const style = document.createElement("style");
     style.innerHTML = g_shakeAnimation;
     document.head.appendChild(style);
 
-    await findPostsByCurrentUser();
-
-    const badges = getUserBadges();
-    const post = frame.parentElement.parentElement.parentElement.parentElement; // gross, I know
-    const profile = document.getElementById("profile");
-    const username = profile !== null ? profile.innerText.trim() : null;
-
-    const pageInfo = {
-        badges: badges,
+    // initialize info message
+    let pageInfo = {
+        badges: [],
         bgcolor: getComputedStyle(post).backgroundColor,
         frameheight: frame.height,
         postid: post.id,
-        username: username,
-        weezer: badges.includes("Weezerfestbadge.png"),
-    };
+        username: null,
+        userposted: false,
+        weezer: false,
+    }
+
+    // if no user is logged in, use a boots post for later fourth-wall silliness
+    //   (unless something goes horribly wrong, boots has a post history)
+    if (profileElem == null) {
+        g_spoofedPost = await fetchLastPostByUser("https://forum.starmen.net/members/Amstrauz");
+        return pageInfo;
+    }
+
+    // otherwise, grab the logged-in user's name and try to find a post of theirs to spoof
+    pageInfo.username = profileElem.innerText.trim();
+
+    const currentProfile = profileElem.getElementsByTagName("a")[0].href;
+    for (const post of document.getElementsByClassName("post")) {
+        const otherProfile = post.getElementsByClassName("member")[0].href;
+        if (otherProfile == currentProfile) {
+            g_userPosts.push(post);
+        }
+    }
+    // if the user has posted on the current page, just clone the first one
+    if (g_userPosts.length > 0 && !g_userPosts[0].classList.contains("quick")) {
+        g_spoofedPost = g_userPosts[0].cloneNode(true);
+        pageInfo.userposted = true;
+    }
+    // otherwise we have to find an exemplar post
+    else {
+        const newPost = await fetchLastPostByUser(currentProfile);
+        if (newPost !== null) {
+            g_spoofedPost = newPost;
+            pageInfo.userposted = true;
+        }
+    }
+    // if we found a post to spoof, track it and enumerate the user's badges
+    if (g_spoofedPost !== null) {
+        g_userPosts.splice(0, 0, g_spoofedPost);
+        for (const badge of g_spoofedPost.getElementsByClassName("badges")[0].children) {
+            const src = badge.getElementsByTagName("img")[0].src;
+            const badgeName = src.split("/").reverse()[0];
+            pageInfo.badges.push(badgeName);
+            if (badgeName == "Weezerfestbadge.png") {
+                pageInfo.weezer = true;
+            }
+        }
+    }
+    // if not, construct one by cloning/modifying the OP to have the user's name and sprite
+    //  (we're assuming here that a user with no posts will also have no badges and no avatar)
+    else {
+        const op = document.getElementsByClassName("post")[0];
+        g_spoofedPost = op.cloneNode(true);
+        
+        // pull the sprite and username from the topbar profile element
+        const header = g_spoofedPost.getElementsByClassName("post-header")[0];
+        header.getElementsByTagName("h3")[0].innerHTML = profileElem.innerHTML;
+        header.getElementById("logoutform")[0].remove();
+
+        // also remove the badges from the copied post
+        for (const badgeElem of g_spoofedPost.getElementsByClassName("badges")) {
+            badgeElem.remove();
+        }
+    }
+
     return pageInfo;
 }
 
@@ -149,7 +173,7 @@ async function doResize(frame, messageContent) {
 
 async function doDeleteBadge(frame, messageContent) {
     for (const post of g_userPosts) {
-        for (let badge of post.getElementsByClassName("badges")[0].children) {
+        for (const badge of post.getElementsByClassName("badges")[0].children) {
             const src = badge.getElementsByTagName("img")[0].src;
             if (src.endsWith(messageContent.name)) {
                 badge.remove();
@@ -238,16 +262,24 @@ async function messageHandler(event) {
     // locate the iframe source
     for (const iframe of document.getElementsByTagName("iframe")) {
         if (iframe.contentWindow == event.source) {
-            // call the command handler
-            messageTypes[event.data.message](iframe, event.data.content)
-                .then((response) => {
-                    if (typeof response !== "undefined" && response !== null) {
-                        // responses echo the command name that was sent
-                        event.source.postMessage({message: event.data.message, content: response },
-                            g_gameOrigin);
-                    }
-                });
-            break;
+            try {
+                // call the command handler
+                messageTypes[event.data.message](iframe, event.data.content)
+                    .then((response) => {
+                        if (typeof response !== "undefined" && response !== null) {
+                            // responses echo the command name that was sent
+                            event.source.postMessage({message: event.data.message, content: response },
+                                g_gameOrigin);
+                        }
+                    });
+            }
+            catch (err) {
+                // if we get here, there's a bug or someone is meddling with browser dev tools
+                console.error(err);
+            }
+            finally {
+                break;
+            }
         }
     }
 }

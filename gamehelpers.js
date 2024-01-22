@@ -10,7 +10,12 @@ var g_forumInfo = {
     frameheight: 80,
     postid: "",
     username: "",
+    userposted: false,
     weezer: false,
+}
+
+function sendHello() {
+    parent.postMessage({message: "hello", content: null}, g_forumOrigin);
 }
 
 function helloReceived() {
@@ -41,8 +46,8 @@ function getWeezer() {
     return g_forumInfo.weezer;
 }
 
-function sendHello() {
-    parent.postMessage({message: "hello", content: null}, g_forumOrigin);
+function userPosted() {
+    return g_forumInfo.userposted;
 }
 
 function insertPost() {
@@ -80,11 +85,16 @@ function registerListener() {
             // TODO: comment out logging
             console.log(event)
             if (event.origin !== g_forumOrigin) return;
-
-            // hello
-            if (event.data.message == "hello") {
-                g_forumInfo = event.data.content;
-                g_helloReceived = true;
+            try {
+                // hello
+                if (event.data.message == "hello") {
+                    g_forumInfo = event.data.content;
+                    g_helloReceived = true;
+                }
+            }
+            catch (err) {
+                // if we get here, there's a bug or someone is meddling with browser dev tools
+                console.error(err);
             }
         },
         false,
