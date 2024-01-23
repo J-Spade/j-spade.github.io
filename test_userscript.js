@@ -17,7 +17,6 @@
 //
 
 // expected origin/target domain for game messages
-// TODO: replace with production itch.io domain
 const g_gameOrigin = "https://wanderingboots.github.io";
 
 // the spoofed user post element
@@ -28,9 +27,9 @@ let g_userPosts = [];
 
 // possible text for the spoofed user post
 const g_textOptions = [
-    "<p> I can't wait! </p>",
-    "<p> oh no </p>",
-    "<p> :) </p>",
+    "<p> Hey guys! Are you tired of doing everything alone? Is it a burden to have to wait until you think of something original to say before you can participate in a conversation? Well have I got the solution for you! With the power of my new friend, you too will be able to engage in a conversation without spending any effort! Contact me now for an exclusive deal to supercharge your forum posts with my premium advanced conversational strategy toolkit. You already give so much of your data away for free, wouldn't it be nice to get something in return? Imagine being able to have your account always be the first one to reply to any topic with such insightful remarks like 'GREAT JOB' or 'COOL', showcasing to all your friends how engaged and thoughtful you are of other people's input. Never worry about missing a message from your friends with my built-in auto-reply function. Just hand over the data and we'll take care of the rest. You heard it from me friends, you do not want to miss out on this amazing way to boost your post numbers and get more eyes on you. With my enhanced-posting strategies, you will be the talk of the virtual town! There will also be a unique and cool 30-60% chance your post will contain a sponsered link to another exciting and useful purchase opportunity, which will delight and engage anyone who reads your post, possibly giving you a boost in your metrics. Don't wait, sign up now!</p>",
+    "<p> Hey guys! I can't wait to show you all this cool new game I found! Imagine all the coolest games ever made all averaged into one expansive, all-inclusive experience. I'm so happy to tell everyone about smilequest, the newest game from a very talented game developper I just discovered. It's a 3D open world, hand animated pixel art retro gorgeous anime trading card game with first person hero shooter crafting survival mechanics, all featured a player-focused narrative where your choices really matter! There's a co-op mode where you can win cool skins and participate in a battle royale competitive multiplayer game world that's full of unique and memorable weapons. All this and more is made possible by the new technology the powers this game, and I can't wait to spread it all to you! If you're also ready to become a part of this new horizon for video gaming, please get in touch with me and provide just a few personal details so we can get you started. Thank you all!</p>",
+    "<p> This game made me :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( :( error error error error error</p>",
 ];
 
 // CSS defining a "shake" animation
@@ -175,8 +174,8 @@ async function doHello(frame, messageContent) {
         header.querySelector("#logoutform").remove();
 
         // user sprites are scaled weird in the topbar, so fix it
-        if (header.getElementsByTagName("img").length == 1) {
-            header.getElementsByTagName("img")[0].removeAttribute("style");
+        if (header.getElementsByClassName("sprite").length == 1) {
+            header.getElementsByClassName("sprite")[0].removeAttribute("style");
         }
 
         // remove any badges or signatures from the copied post
@@ -216,6 +215,7 @@ async function doDummyPost(frame, messageContent) {
 
         // assign "post even" to the post - post is inserted right after the OP
         //   also assign "avsdoda" so it's faster/easier to find again
+        g_spoofedPost.classList = [];
         g_spoofedPost.classList.add("post", "even", "avsdoda");
 
         // replace the message-content with an initial value
@@ -279,8 +279,7 @@ async function doShakeStop(frame, messageContent) {
 }
 
 async function messageHandler(event) {
-    // TODO: comment out logging
-    console.log(event);
+    // console.log(event);
     if (event.origin !== g_gameOrigin) return;
 
     // each command handler uses the same function prototype

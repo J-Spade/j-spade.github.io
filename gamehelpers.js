@@ -82,8 +82,7 @@ function registerListener() {
     window.addEventListener(
         "message",
         (event) => {
-            // TODO: comment out logging
-            console.log(event)
+            // console.log(event)
             if (event.origin !== g_forumOrigin) return;
             try {
                 // hello
