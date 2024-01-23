@@ -133,12 +133,14 @@ async function doHello(frame, messageContent) {
     // if we found a post to spoof, track it and enumerate the user's badges
     if (g_spoofedPost !== null) {
         g_userPosts.splice(0, 0, g_spoofedPost);
-        for (const badge of g_spoofedPost.getElementsByClassName("badges")[0].children) {
-            const src = badge.getElementsByTagName("img")[0].src;
-            const badgeName = src.split("/").reverse()[0];
-            pageInfo.badges.push(badgeName);
-            if (badgeName == "Weezerfestbadge.png") {
-                pageInfo.weezer = true;
+        if (g_spoofedPost.getElementsByClassName("badges").length > 0) {
+            for (const badge of g_spoofedPost.getElementsByClassName("badges")[0].children) {
+                const src = badge.getElementsByTagName("img")[0].src;
+                const badgeName = src.split("/").reverse()[0];
+                pageInfo.badges.push(badgeName);
+                if (badgeName == "Weezerfestbadge.png") {
+                    pageInfo.weezer = true;
+                }
             }
         }
     }
@@ -147,15 +149,28 @@ async function doHello(frame, messageContent) {
     else {
         const op = document.getElementsByClassName("post")[0];
         g_spoofedPost = op.cloneNode(true);
+
+        // debug userscript adds a button we don't want
+        for (const buttonElem of g_spoofedPost.getElementsByTagName("button")) {
+            buttonElem.remove();
+        }
         
         // pull the sprite and username from the topbar profile element
         const header = g_spoofedPost.getElementsByClassName("post-header")[0];
         header.getElementsByTagName("h3")[0].innerHTML = profileElem.innerHTML;
-        header.getElementById("logoutform")[0].remove();
+        header.querySelector("#logoutform").remove();
 
-        // also remove the badges from the copied post
+        // user sprites are scaled weird in the topbar, so fix it
+        if (header.getElementsByTagName("img").length == 1) {
+            header.getElementsByTagName("img")[0].removeAttribute("style");
+        }
+
+        // remove any badges or signatures from the copied post
         for (const badgeElem of g_spoofedPost.getElementsByClassName("badges")) {
             badgeElem.remove();
+        }
+        for (const sigElem of g_spoofedPost.getElementsByClassName("sig")) {
+            sigElem.remove();
         }
     }
 
@@ -192,11 +207,21 @@ async function doDummyPost(frame, messageContent) {
         // replace the message-content with an initial value
         g_spoofedPost.getElementsByClassName("message-content")[0].innerHTML = g_textOptions[0];
 
+        // remove any attachments that were part of the original post
+        for (const attachElem of g_spoofedPost.getElementsByClassName("attachments")) {
+            attachElem.remove();
+        }
+
         // strip the links out of the edit/quote/report/etc buttons
         const utils = g_spoofedPost.getElementsByClassName("utils")[0];
         for (const elem of utils.getElementsByTagName("a")) {
             elem.href = "#";
         }
+
+        // update the post timestamp
+        const timeElem = g_spoofedPost.getElementsByClassName("changeabletime")[0];
+        timeElem.innerText = "less than a minute ago";
+        timeElem.title = new Date().toLocaleString("en-US", {dateStyle: "long", timeStyle: "short"});
 
         // insert the faked user post as a reply to the OP
         const op = document.getElementsByClassName("post")[0];
