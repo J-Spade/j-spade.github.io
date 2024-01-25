@@ -107,6 +107,7 @@ async function doHello(frame, messageContent) {
         badges: [],
         bgcolor: getComputedStyle(post).backgroundColor,
         frameheight: frame.height,
+        hiddenbadges: [],  // not actually tracked here
         postid: post.id,
         username: null,
         userposted: false,
@@ -117,6 +118,11 @@ async function doHello(frame, messageContent) {
     //   (unless something goes horribly wrong, boots has a post history)
     if (profileElem == null) {
         g_spoofedPost = await fetchLastPostByUser("https://forum.starmen.net/members/Amstrauz");
+        // swap the avatar for a specific one
+        g_spoofedPost.getElementsByClassName("member")[0]
+            .getElementsByTagName("img")[0]
+            .src = "https://ssl-forum-files.fobby.net/forum_attachments/0047/6512/BootsAvvieGif.gif";
+
         return pageInfo;
     }
 
@@ -148,8 +154,7 @@ async function doHello(frame, messageContent) {
         g_userPosts.splice(0, 0, g_spoofedPost);
         if (g_spoofedPost.getElementsByClassName("badges").length > 0) {
             for (const badge of g_spoofedPost.getElementsByClassName("badges")[0].children) {
-                const src = badge.getElementsByTagName("img")[0].src;
-                const badgeName = src.split("/").reverse()[0];
+                const badgeName = badge.getElementsByTagName("img")[0].src.split("/").reverse()[0];
                 pageInfo.badges.push(badgeName);
                 if (badgeName == "Weezerfestbadge.png") {
                     pageInfo.weezer = true;
@@ -200,9 +205,24 @@ async function doDeleteBadge(frame, messageContent) {
         for (const badge of post.getElementsByClassName("badges")[0].children) {
             const src = badge.getElementsByTagName("img")[0].src;
             if (src.endsWith(messageContent.name)) {
-                badge.remove();
+                // hidden badges can be restored later (all at once)
+                if (messageContent.hide) {
+                    badge.hidden = true;
+                }
+                else {
+                    badge.remove();
+                }
                 break;
             }
+        }
+    }
+}
+
+async function doRestoreBadges(frame, messageContent) {
+    // un-hides any previously hidden badges
+    for (const post of g_userPosts) {
+        for (const badge of post.getElementsByClassName("badges")[0].children) {
+            badge.hidden = false;
         }
     }
 }
@@ -288,6 +308,7 @@ async function messageHandler(event) {
         delbadge: doDeleteBadge,
         dummypost: doDummyPost,
         resize: doResize,
+        restorebadges: doRestoreBadges,
         settext: doSetText,
         shakestart: doShakeStart,
         shakestop: doShakeStop,

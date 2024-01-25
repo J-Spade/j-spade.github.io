@@ -8,6 +8,7 @@ var g_forumInfo = {
     badges: [],
     bgcolor: "rgb(0,0,0)",
     frameheight: 80,
+    hiddenbadges: [],
     postid: "",
     username: "",
     userposted: false,
@@ -34,6 +35,10 @@ function getFrameHeight() {
     return g_forumInfo.frameheight;
 }
 
+function getHiddenBadges() {
+    return g_forumInfo.hiddenbadges;
+}
+
 function getPostId() {
     return g_forumInfo.postid;
 }
@@ -54,12 +59,25 @@ function insertPost() {
     parent.postMessage({message: "dummypost", content: null}, g_forumOrigin);
 }
 
-function deleteBadge(badgeName) {
+function deleteBadge(badgeName, hide = true) {
     var idx = g_forumInfo.badges.indexOf(badgeName);
     if (idx != -1) {
         g_forumInfo.badges.splice(idx, 1);
-        parent.postMessage({message: "delbadge", content: {name: badgeName}}, g_forumOrigin);
+        // track hidden badges in case they need to be restored
+        if (hide) {
+            g_forumInfo.hiddenbadges.push(badgeName);
+        }
+        parent.postMessage({message: "delbadge", content: {name: badgeName, hide: hide}}, g_forumOrigin);
     }
+}
+
+function restoreBadges() {
+    // unhides badges that were hidden - deletion is still permanent
+    for (const hidden in g_forumInfo.hiddenbadges) {
+        g_forumInfo.badges.push(hidden);
+    }
+    g_forumInfo.hiddenbadges = [];
+    parent.postMessage({message: "restorebadges", content: null}, g_forumOrigin);
 }
 
 function setPostTextIndex(idx) {

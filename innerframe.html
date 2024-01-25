@@ -10,7 +10,9 @@
         <button id="post" onclick="insertPost()">post</button>
         <button id="resize" onclick="toggleFrameSize()">resize</button>
         <button id="shake" onclick="shakeFrame()">shake</button>
-        <button id="badge" onclick="deleteRandomBadge()">badge</button>
+        <button id="delete" onclick="deleteRandomBadge(false)">delete</button>
+        <button id="hide" onclick="deleteRandomBadge()">hide</button>
+        <button id="restore" onclick="restoreBadges()">restore</button>
         <button id="text" onclick="cycleText()">text</button>
     </body>
     <script>
@@ -40,9 +42,9 @@
             shakeStop();
         }
 
-        function deleteRandomBadge() {
+        function deleteRandomBadge(hide = true) {
             const randBadge = g_forumInfo.badges[Math.floor(Math.random() * g_forumInfo.badges.length)]
-            deleteBadge(randBadge);
+            deleteBadge(randBadge, hide);
         }
 
         function cycleText() {
