@@ -193,7 +193,7 @@ async function doDeleteBadge(frame, messageContent) {
             if (src.endsWith(messageContent.name)) {
                 // hidden badges can be restored later (all at once)
                 if (messageContent.hide) {
-                    badge.hidden = true;
+                    badge.style.display = "none";
                 }
                 else {
                     badge.remove();
@@ -208,7 +208,7 @@ async function doRestoreBadges(frame, messageContent) {
     // un-hides any previously hidden badges
     for (const post of g_userPosts) {
         for (const badge of post.getElementsByClassName("badges")[0].children) {
-            badge.hidden = false;
+            badge.style.display = "";
         }
     }
 }
