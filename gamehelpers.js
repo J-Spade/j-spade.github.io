@@ -73,7 +73,7 @@ function deleteBadge(badgeName, hide = true) {
 
 function restoreBadges() {
     // unhides badges that were hidden - deletion is still permanent
-    for (const hidden in g_forumInfo.hiddenbadges) {
+    for (const hidden of g_forumInfo.hiddenbadges) {
         g_forumInfo.badges.push(hidden);
     }
     g_forumInfo.hiddenbadges = [];
