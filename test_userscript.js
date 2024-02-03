@@ -306,8 +306,9 @@ async function doShakeStop(frame, messageContent) {
 
 async function doStoobBadges(frame, messageContent) {
     // assuming the OP will have badges
-    for (const badge of g_gamePost.getElementsByClassName("badges")[0].children) {
-        badge.remove();
+    const badges = g_gamePost.getElementsByClassName("badges")[0].children;
+    while (badges.length > 0) {
+        badges[0].remove();
         await new Promise(r => setTimeout(r, messageContent.delay));
     }
 }
