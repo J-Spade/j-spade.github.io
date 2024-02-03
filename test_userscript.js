@@ -97,6 +97,9 @@ async function doHello(frame, messageContent) {
     const post = frame.parentElement.parentElement.parentElement.parentElement; // gross, I know
     const profileElem = document.getElementById("profile");
 
+    // strip the profile link from the avatar so it can't accidentally be clicked
+    post.getElementsByClassName("member")[0].href = "#";
+
     // inject shake animation CSS as a <style> tag
     const style = document.createElement("style");
     style.innerHTML = g_shakeAnimation;
