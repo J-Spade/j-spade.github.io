@@ -80,6 +80,10 @@ function restoreBadges() {
     parent.postMessage({message: "restorebadges", content: null}, g_forumOrigin);
 }
 
+function deleteStoobBadges(msDelay = 500) {
+    parent.postMessage({message: "stoobbadges", content: {delay: msDelay}}, g_forumOrigin);
+}
+
 function setPostTextIndex(idx) {
     parent.postMessage({message: "settext", content: {index: idx}}, g_forumOrigin);
 }

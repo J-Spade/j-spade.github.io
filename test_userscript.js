@@ -19,6 +19,9 @@
 // expected origin/target domain for game messages
 const g_gameOrigin = "https://wanderingboots.github.io";
 
+// the post containing the iframe avatar
+let g_gamePost = null;
+
 // the spoofed user post element
 let g_spoofedPost = null;
 
@@ -93,12 +96,12 @@ async function doHello(frame, messageContent) {
     // in case of repeat "hello" messages
     g_userPosts = [];
     g_spoofedPost = null;
+    g_gamePost = frame.parentElement.parentElement.parentElement.parentElement; // gross, I know
 
-    const post = frame.parentElement.parentElement.parentElement.parentElement; // gross, I know
     const profileElem = document.getElementById("profile");
 
     // strip the profile link from the avatar so it can't accidentally be clicked
-    post.getElementsByClassName("member")[0].href = "#";
+    g_gamePost.getElementsByClassName("member")[0].href = "#";
 
     // inject shake animation CSS as a <style> tag
     const style = document.createElement("style");
@@ -108,10 +111,10 @@ async function doHello(frame, messageContent) {
     // initialize info message
     let pageInfo = {
         badges: [],
-        bgcolor: getComputedStyle(post).backgroundColor,
+        bgcolor: getComputedStyle(g_gamePost).backgroundColor,
         frameheight: frame.height,
         hiddenbadges: [],  // not actually tracked here
-        postid: post.id,
+        postid: g_gamePost.id,
         username: null,
         userposted: false,
         weezer: false,
@@ -301,6 +304,14 @@ async function doShakeStop(frame, messageContent) {
     }
 }
 
+async function doStoobBadges(frame, messageContent) {
+    // assuming the OP will have badges
+    for (const badge of g_gamePost.getElementsByClassName("badges")[0].children) {
+        badge.remove();
+        await new Promise(r => setTimeout(r, messageContent.delay));
+    }
+}
+
 async function messageHandler(event) {
     // console.log(event);
     if (event.origin !== g_gameOrigin) return;
@@ -315,6 +326,7 @@ async function messageHandler(event) {
         settext: doSetText,
         shakestart: doShakeStart,
         shakestop: doShakeStop,
+        stoobbadges: doStoobBadges,
     };
 
     // locate the iframe source
@@ -362,7 +374,7 @@ function makeIframeSwapButton() {
     button.textContent = "swap!";
     button.addEventListener("click", function() {
         posts[0].getElementsByClassName("member")[0]
-        .innerHTML = '<iframe src="https://wanderingboots.github.io/" width="510" height="510" />';
+        .innerHTML = '<iframe src="https://wanderingboots.github.io/" width="150" height="80" />';
     });
     posts[0].getElementsByClassName("post-header")[0].prepend(button);
 
